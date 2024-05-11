@@ -1,0 +1,145 @@
+#ifndef SPLAY_HPP
+#define SPLAY_HPP
+
+#include "Node.hpp"
+
+class Splay {
+private:
+    Node* root;
+    Node* p;
+    Node* g;
+
+    Node* zig(Node* x);
+    Node* zag(Node* x);
+    Node* zigzag(Node* x);
+    Node* zagzig(Node* x);
+    Node* splay(Node* x);
+
+public:
+    Splay();
+    ~Splay();
+
+    void insert(char* value);
+};
+
+Splay::Splay() : root(nullptr), p(nullptr), g(nullptr) {}
+
+Splay::~Splay() {
+    delete root;
+}
+
+// rotación hacia la izquierda
+Node* Splay::zig(Node* x) {
+    Node* y = x->getNext();
+    x->setNext(y->getNext());
+    y->setNext(x);
+    return y;
+}
+
+// rotación hacia la derecha
+Node* Splay::zag(Node* x) {
+    Node* y = x->getNext();
+    x->setNext(y->getNext());
+    y->setNext(x);
+    return y;
+}
+
+// rotación izq-der
+Node* Splay::zigzag(Node* x) {
+    Node* p = x->getNext();
+    Node* g = p->getNext();
+    if ((x == p->getNext() && p == g->getNext()) || (x == p->getNext() && p == g->getNext())) {
+        if (x == p->getNext()) {
+            // izquierda
+            return zig(zig(x));
+        } else {
+            // derecha
+            return zag(zag(x));
+        }
+    }
+    return nullptr;
+}
+
+// rotación der-izq
+Node* Splay::zagzig(Node* x) {
+    Node* p = x->getNext();
+    Node* g = p->getNext();
+    if ((x == p->getNext() && p == g->getNext()) || (x == p->getNext() && p == g->getNext())) {
+        if (x == p->getNext()) {
+            // izquierda
+            return zigzag(x);
+        } else {
+            // derecha
+            return zagzig(x);
+        }
+    }
+    return nullptr;
+}
+
+// splay
+Node* Splay::splay(Node* x) {
+    if (x == nullptr) {
+        return nullptr;
+    }
+
+    while (x != root) {
+        Node* p = x->getNext();
+        if (p == nullptr) {
+            // Caso 1: x es hijo del nodo raíz
+            if (x == root->getNext()) {
+                root = zig(x);
+            } else {
+                root = zag(x);
+            }
+        } else {
+            Node* g = p->getNext();
+            if (g == nullptr) {
+                // Caso 2: x es nieto de la raíz
+                if (x == p->getNext() && p == root->getNext()) {
+                    root = zig(zig(x));
+                } else if (x == p->getNext() && p == root->getNext()) {
+                    root = zag(zag(x));
+                } else if (x == p->getNext() && p == root->getNext()) {
+                    root = zagzig(x);
+                } else {
+                    root = zigzag(x);
+                }
+            } else {
+                // Caso 3: x es bisnieto de la raíz
+                if ((x == p->getNext() && p == g->getNext()) || (x == p->getNext() && p == g->getNext())) {
+                    if (x == p->getNext()) {
+                        root = zigzag(x);
+                    } else {
+                        root = zagzig(x);
+                    }
+                } else {
+                    if (x == p->getNext()) {
+                        root = zigzag(x);
+                    } else {
+                        root = zagzig(x);
+                    }
+                }
+            }
+        }
+    }
+
+    return root;
+}
+// inserta el nuevo valor
+void Splay::insert(char* value) {
+    Node* newNode = new Node(value);
+    if (root == nullptr) {
+        root = newNode;
+    } else {
+        list<Node*>* childList = root->getChildsList();
+        if (childList->getLength() == 2) {
+            Node* leafNode = new Node(value); 
+            root->getChildsList()->insertar(&leafNode);
+            root = splay(leafNode);
+        } else {
+            childList->insertar(&newNode);
+            root = splay(newNode);
+        }
+    }
+}
+#endif
